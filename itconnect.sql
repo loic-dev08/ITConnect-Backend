@@ -83,13 +83,13 @@ INSERT INTO utilisateurs (prenom, nom, email, mot_de_passe, role, ville) VALUES
 ('Loïc',        'Carrasco',    'loic.carrasco@itconnect.fr',    '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'admin',         'Montereau'),
 
 -- Professionnels IT
-('Karim',       'Ndiyae',      'k.ndiyae@gmail.com',            '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'professionnel', 'Melun'),
+('Larry',       'Max',         'larry.max@gmail.com',            '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'professionnel', 'Melun'),
 ('Amélie',      'Chevalier',   'a.chevalier@gmail.com',         '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'professionnel', 'Sens'),
 ('Thomas',      'Moreau',      't.moreau@outlook.fr',           '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'professionnel', 'Auxerre'),
 ('Lucie',       'Perrin',      'lucie.perrin@gmail.com',        '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'professionnel', 'Montereau'),
 ('Romain',      'Bernard',     'romain.bernard@outlook.fr',     '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'professionnel', 'Montpellier'),
 ('Nina',        'Vallet',      'nina.vallet.ux@gmail.com',      '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'professionnel', 'Melun'),
-('Youssef',     'Driss',       'y.driss@proton.me',             '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'professionnel', 'Auxerre'),
+('Thomas',     'Mercier',       't.mercier@gmail.com',             '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'professionnel', 'Auxerre'),
 
 -- Entreprises
 ('DataSolutions', 'SAS',       'contact@datasolutions66.fr',    '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'entreprise',    'Melun'),
