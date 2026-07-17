@@ -9,6 +9,7 @@ require('./models')
 const authRoutes           = require('./routes/auth')
 const professionnelsRoutes = require('./routes/professionnels')
 const demandesRoutes       = require('./routes/demandes')
+const entreprisesRoutes = require('./routes/entreprises')
 
 const app  = express()
 const PORT = process.env.PORT || 3000
@@ -29,6 +30,7 @@ app.use((req, res, next) => {
 app.use('/api/auth',           authRoutes)
 app.use('/api/professionnels', professionnelsRoutes)
 app.use('/api/demandes',       demandesRoutes)
+app.use('/api/entreprises', entreprisesRoutes)
 
 app.get('/', (req, res) => {
   res.json({ message: '🚀 API ITConnect opérationnelle', version: '1.0.0' })
