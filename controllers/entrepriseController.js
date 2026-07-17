@@ -12,7 +12,21 @@ async function getEntreprises(req, res, next) {
       attributes: ['id', 'prenom', 'nom', 'email', 'ville', 'created_at'],
       order: [['prenom', 'ASC']],
     })
-    res.json({ entreprises })
+
+    // Ajoute le nombre de demandes et d'avis pour chaque entreprise
+    const entreprisesAvecStats = await Promise.all(
+      entreprises.map(async (e) => {
+        const nombreDemandes = await Demande.count({ where: { clientId: e.id } })
+        const nombreAvis = await Avis.count({ where: { clientId: e.id } })
+        return {
+          ...e.toJSON(),
+          nombre_demandes: nombreDemandes,
+          nombre_avis: nombreAvis,
+        }
+      })
+    )
+
+    res.json({ entreprises: entreprisesAvecStats })
   } catch (error) { next(error) }
 }
 
