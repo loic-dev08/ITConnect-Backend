@@ -1,0 +1,947 @@
+{
+ "info": {
+  "name": "ITConnect API",
+  "description": "Tests fonctionnels de l'API ITConnect (inscription, connexion, droits, demandes, avis, suppression en cascade). Lancer l'API sur {{baseUrl}} avant d'exécuter la collection.",
+  "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+ },
+ "item": [
+  {
+   "name": "1 – Authentification",
+   "item": [
+    {
+     "name": "TF1 – Inscription valide",
+     "event": [
+      {
+       "listen": "prerequest",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.collectionVariables.set('email', 'postman_' + Date.now() + '@exemple.fr')",
+         "pm.collectionVariables.set('motDePasse', 'Test1234!')"
+        ]
+       }
+      },
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('TF1 – statut 201', () => pm.response.to.have.status(201))",
+         "const j = pm.response.json()",
+         "pm.test('TF1 – jeton renvoyé', () => pm.expect(j.token).to.be.a('string'))",
+         "pm.test('TF1 – rôle particulier', () => pm.expect(j.user.role).to.eql('particulier'))",
+         "pm.test('TF1 – aucun hash dans la réponse', () => { pm.expect(j.user).to.not.have.property('motDePasse'); pm.expect(j.user).to.not.have.property('mot_de_passe') })",
+         "pm.collectionVariables.set('token', j.token)"
+        ]
+       }
+      }
+     ],
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       }
+      ],
+      "url": {
+       "raw": "{{baseUrl}}/api/auth/inscription",
+       "host": [
+        "{{baseUrl}}"
+       ],
+       "path": [
+        "api",
+        "auth",
+        "inscription"
+       ]
+      },
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"prenom\": \"Test\",\n  \"nom\": \"Postman\",\n  \"email\": \"{{email}}\",\n  \"motDePasse\": \"{{motDePasse}}\",\n  \"role\": \"particulier\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "TF2 – Inscription avec e-mail déjà utilisé",
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('TF2 – statut 409', () => pm.response.to.have.status(409))",
+         "pm.test('TF2 – message « Email déjà utilisé. »', () => pm.expect(pm.response.json().message).to.eql(\"Email déjà utilisé.\"))"
+        ]
+       }
+      }
+     ],
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       }
+      ],
+      "url": {
+       "raw": "{{baseUrl}}/api/auth/inscription",
+       "host": [
+        "{{baseUrl}}"
+       ],
+       "path": [
+        "api",
+        "auth",
+        "inscription"
+       ]
+      },
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"prenom\": \"Test\",\n  \"nom\": \"Doublon\",\n  \"email\": \"{{email}}\",\n  \"motDePasse\": \"{{motDePasse}}\",\n  \"role\": \"particulier\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "TF3 – Inscription avec role « admin » (liste blanche)",
+     "event": [
+      {
+       "listen": "prerequest",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.collectionVariables.set('emailTF3', 'postman_admin_' + Date.now() + '@exemple.fr')"
+        ]
+       }
+      },
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('TF3 – statut 201', () => pm.response.to.have.status(201))",
+         "const j = pm.response.json()",
+         "pm.test('TF3 – le rôle admin est refusé (devient particulier)', () => pm.expect(j.user.role).to.eql('particulier'))",
+         "pm.collectionVariables.set('tokenTF3', j.token)"
+        ]
+       }
+      }
+     ],
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       }
+      ],
+      "url": {
+       "raw": "{{baseUrl}}/api/auth/inscription",
+       "host": [
+        "{{baseUrl}}"
+       ],
+       "path": [
+        "api",
+        "auth",
+        "inscription"
+       ]
+      },
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"prenom\": \"Pirate\",\n  \"nom\": \"Admin\",\n  \"email\": \"{{emailTF3}}\",\n  \"motDePasse\": \"{{motDePasse}}\",\n  \"role\": \"admin\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "TF4 – Inscription avec mot de passe faible",
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('TF4 – statut 400', () => pm.response.to.have.status(400))"
+        ]
+       }
+      }
+     ],
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       }
+      ],
+      "url": {
+       "raw": "{{baseUrl}}/api/auth/inscription",
+       "host": [
+        "{{baseUrl}}"
+       ],
+       "path": [
+        "api",
+        "auth",
+        "inscription"
+       ]
+      },
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"prenom\": \"Test\",\n  \"nom\": \"Faible\",\n  \"email\": \"faible_{{$timestamp}}@exemple.fr\",\n  \"motDePasse\": \"abc\",\n  \"role\": \"particulier\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "TF5 – Inscription avec champs manquants",
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('TF5 – statut 400', () => pm.response.to.have.status(400))"
+        ]
+       }
+      }
+     ],
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       }
+      ],
+      "url": {
+       "raw": "{{baseUrl}}/api/auth/inscription",
+       "host": [
+        "{{baseUrl}}"
+       ],
+       "path": [
+        "api",
+        "auth",
+        "inscription"
+       ]
+      },
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"email\": \"incomplet_{{$timestamp}}@exemple.fr\",\n  \"motDePasse\": \"Test1234!\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "TF6a – Connexion valide",
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('TF6a – statut 200', () => pm.response.to.have.status(200))",
+         "const j = pm.response.json()",
+         "pm.test('TF6a – jeton renvoyé', () => pm.expect(j.token).to.be.a('string'))",
+         "pm.test('TF6a – utilisateur sans hash', () => pm.expect(j.user).to.not.have.property('motDePasse'))",
+         "pm.collectionVariables.set('token', j.token)"
+        ]
+       }
+      }
+     ],
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       }
+      ],
+      "url": {
+       "raw": "{{baseUrl}}/api/auth/connexion",
+       "host": [
+        "{{baseUrl}}"
+       ],
+       "path": [
+        "api",
+        "auth",
+        "connexion"
+       ]
+      },
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"email\": \"{{email}}\",\n  \"motDePasse\": \"{{motDePasse}}\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "TF6b – Connexion avec mauvais mot de passe",
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('TF6b – statut 401', () => pm.response.to.have.status(401))",
+         "pm.test('TF6b – message « Email ou mot de passe incorrect. »', () => pm.expect(pm.response.json().message).to.eql(\"Email ou mot de passe incorrect.\"))"
+        ]
+       }
+      }
+     ],
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       }
+      ],
+      "url": {
+       "raw": "{{baseUrl}}/api/auth/connexion",
+       "host": [
+        "{{baseUrl}}"
+       ],
+       "path": [
+        "api",
+        "auth",
+        "connexion"
+       ]
+      },
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"email\": \"{{email}}\",\n  \"motDePasse\": \"MauvaisMdp1\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "TF6c – Connexion avec e-mail inconnu (même message)",
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('TF6c – statut 401', () => pm.response.to.have.status(401))",
+         "pm.test('TF6c – message « Email ou mot de passe incorrect. »', () => pm.expect(pm.response.json().message).to.eql(\"Email ou mot de passe incorrect.\"))"
+        ]
+       }
+      }
+     ],
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       }
+      ],
+      "url": {
+       "raw": "{{baseUrl}}/api/auth/connexion",
+       "host": [
+        "{{baseUrl}}"
+       ],
+       "path": [
+        "api",
+        "auth",
+        "connexion"
+       ]
+      },
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"email\": \"inconnu_{{$timestamp}}@exemple.fr\",\n  \"motDePasse\": \"Test1234!\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "TF7 – GET /me sans jeton",
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('TF7 – statut 401', () => pm.response.to.have.status(401))",
+         "pm.test('TF7 – message « Token manquant. »', () => pm.expect(pm.response.json().message).to.eql(\"Token manquant.\"))"
+        ]
+       }
+      }
+     ],
+     "request": {
+      "method": "GET",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       }
+      ],
+      "url": {
+       "raw": "{{baseUrl}}/api/auth/me",
+       "host": [
+        "{{baseUrl}}"
+       ],
+       "path": [
+        "api",
+        "auth",
+        "me"
+       ]
+      }
+     }
+    },
+    {
+     "name": "TF8 – GET /me avec jeton falsifié",
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('TF8 – statut 401', () => pm.response.to.have.status(401))",
+         "pm.test('TF8 – message « Token invalide. »', () => pm.expect(pm.response.json().message).to.eql(\"Token invalide.\"))"
+        ]
+       }
+      }
+     ],
+     "request": {
+      "method": "GET",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "Bearer abc.def.ghi"
+       }
+      ],
+      "url": {
+       "raw": "{{baseUrl}}/api/auth/me",
+       "host": [
+        "{{baseUrl}}"
+       ],
+       "path": [
+        "api",
+        "auth",
+        "me"
+       ]
+      }
+     }
+    },
+    {
+     "name": "TF8b – GET /me avec jeton valide",
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('TF8b – statut 200', () => pm.response.to.have.status(200))",
+         "const j = pm.response.json()",
+         "pm.test('TF8b – e-mail du compte', () => pm.expect(j.user.email).to.eql(pm.collectionVariables.get('email')))"
+        ]
+       }
+      }
+     ],
+     "request": {
+      "method": "GET",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "Bearer {{token}}"
+       }
+      ],
+      "url": {
+       "raw": "{{baseUrl}}/api/auth/me",
+       "host": [
+        "{{baseUrl}}"
+       ],
+       "path": [
+        "api",
+        "auth",
+        "me"
+       ]
+      }
+     }
+    }
+   ]
+  },
+  {
+   "name": "2 – Professionnels",
+   "item": [
+    {
+     "name": "TF9 – Recherche de professionnels (route publique)",
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('TF9 – statut 200', () => pm.response.to.have.status(200))",
+         "const j = pm.response.json()",
+         "const liste = Array.isArray(j) ? j : (j.professionnels || j.data || [])",
+         "pm.test('TF9 – la réponse contient des professionnels', () => pm.expect(liste.length).to.be.above(0))",
+         "if (liste[0]) pm.collectionVariables.set('proId', liste[0].id)"
+        ]
+       }
+      }
+     ],
+     "request": {
+      "method": "GET",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       }
+      ],
+      "url": {
+       "raw": "{{baseUrl}}/api/professionnels?specialite=R%C3%A9seau",
+       "host": [
+        "{{baseUrl}}"
+       ],
+       "path": [
+        "api",
+        "professionnels"
+       ],
+       "query": [
+        {
+         "key": "specialite",
+         "value": "R%C3%A9seau"
+        }
+       ]
+      }
+     }
+    }
+   ]
+  },
+  {
+   "name": "3 – Demandes et avis",
+   "item": [
+    {
+     "name": "TF10 – Création d'une demande (client connecté)",
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('TF10 – statut 201', () => pm.response.to.have.status(201))",
+         "const j = pm.response.json()",
+         "pm.test('TF10 – statut « En attente »', () => pm.expect(j.demande.statut).to.eql('En attente'))",
+         "pm.collectionVariables.set('demandeId', j.demande.id)"
+        ]
+       }
+      }
+     ],
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "Bearer {{token}}"
+       }
+      ],
+      "url": {
+       "raw": "{{baseUrl}}/api/demandes",
+       "host": [
+        "{{baseUrl}}"
+       ],
+       "path": [
+        "api",
+        "demandes"
+       ]
+      },
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"professionnelId\": \"{{proId}}\",\n  \"objet\": \"Test Postman\",\n  \"message\": \"Demande créée par la collection Postman.\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "TF11 – Création d'une demande sans jeton",
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('TF11 – statut 401', () => pm.response.to.have.status(401))"
+        ]
+       }
+      }
+     ],
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       }
+      ],
+      "url": {
+       "raw": "{{baseUrl}}/api/demandes",
+       "host": [
+        "{{baseUrl}}"
+       ],
+       "path": [
+        "api",
+        "demandes"
+       ]
+      },
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"professionnelId\": \"{{proId}}\",\n  \"objet\": \"Sans jeton\",\n  \"message\": \"Doit être refusée.\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "TF12 – Changement de statut par un client",
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('TF12 – statut 403', () => pm.response.to.have.status(403))"
+        ]
+       }
+      }
+     ],
+     "request": {
+      "method": "PUT",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "Bearer {{token}}"
+       }
+      ],
+      "url": {
+       "raw": "{{baseUrl}}/api/demandes/{{demandeId}}/statut",
+       "host": [
+        "{{baseUrl}}"
+       ],
+       "path": [
+        "api",
+        "demandes",
+        "{{demandeId}}",
+        "statut"
+       ]
+      },
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"statut\": \"En cours\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "TF13a – Premier avis",
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('TF13a – statut 201', () => pm.response.to.have.status(201))"
+        ]
+       }
+      }
+     ],
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "Bearer {{token}}"
+       }
+      ],
+      "url": {
+       "raw": "{{baseUrl}}/api/professionnels/{{proId}}/avis",
+       "host": [
+        "{{baseUrl}}"
+       ],
+       "path": [
+        "api",
+        "professionnels",
+        "{{proId}}",
+        "avis"
+       ]
+      },
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"note\": 5,\n  \"texte\": \"Très bon professionnel (test Postman).\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "TF13b – Second avis du même client",
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('TF13b – statut 409', () => pm.response.to.have.status(409))"
+        ]
+       }
+      }
+     ],
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "Bearer {{token}}"
+       }
+      ],
+      "url": {
+       "raw": "{{baseUrl}}/api/professionnels/{{proId}}/avis",
+       "host": [
+        "{{baseUrl}}"
+       ],
+       "path": [
+        "api",
+        "professionnels",
+        "{{proId}}",
+        "avis"
+       ]
+      },
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"note\": 4,\n  \"texte\": \"Second avis : doit être refusé.\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    }
+   ]
+  },
+  {
+   "name": "4 – Nettoyage (TF14)",
+   "item": [
+    {
+     "name": "TF14a – Suppression du compte de test",
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('TF14a – statut 200', () => pm.response.to.have.status(200))"
+        ]
+       }
+      }
+     ],
+     "request": {
+      "method": "DELETE",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "Bearer {{token}}"
+       }
+      ],
+      "url": {
+       "raw": "{{baseUrl}}/api/auth/me",
+       "host": [
+        "{{baseUrl}}"
+       ],
+       "path": [
+        "api",
+        "auth",
+        "me"
+       ]
+      }
+     }
+    },
+    {
+     "name": "TF14b – Le jeton d'un compte supprimé est refusé",
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('TF14b – statut 401', () => pm.response.to.have.status(401))"
+        ]
+       }
+      }
+     ],
+     "request": {
+      "method": "GET",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "Bearer {{token}}"
+       }
+      ],
+      "url": {
+       "raw": "{{baseUrl}}/api/auth/me",
+       "host": [
+        "{{baseUrl}}"
+       ],
+       "path": [
+        "api",
+        "auth",
+        "me"
+       ]
+      }
+     }
+    },
+    {
+     "name": "Nettoyage – suppression du compte créé par TF3",
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('Nettoyage – statut 200', () => pm.response.to.have.status(200))"
+        ]
+       }
+      }
+     ],
+     "request": {
+      "method": "DELETE",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "Bearer {{tokenTF3}}"
+       }
+      ],
+      "url": {
+       "raw": "{{baseUrl}}/api/auth/me",
+       "host": [
+        "{{baseUrl}}"
+       ],
+       "path": [
+        "api",
+        "auth",
+        "me"
+       ]
+      }
+     }
+    }
+   ]
+  }
+ ],
+ "variable": [
+  {
+   "key": "baseUrl",
+   "value": "http://localhost:3000"
+  },
+  {
+   "key": "proId",
+   "value": "1"
+  },
+  {
+   "key": "email",
+   "value": ""
+  },
+  {
+   "key": "motDePasse",
+   "value": "Test1234!"
+  },
+  {
+   "key": "token",
+   "value": ""
+  },
+  {
+   "key": "tokenTF3",
+   "value": ""
+  },
+  {
+   "key": "emailTF3",
+   "value": ""
+  },
+  {
+   "key": "demandeId",
+   "value": ""
+  }
+ ]
+}
