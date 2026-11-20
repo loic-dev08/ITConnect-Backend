@@ -157,3 +157,7 @@ L'application distingue plusieurs rôles, avec des accès et tableaux de bord d�
 ## Auteur
 
 Projet développé par Loïc dans le cadre du titre professionnel DWWM.
+
+## Collection Postman : importez
+- test/ITConnect_API.postman_collection.json
+
